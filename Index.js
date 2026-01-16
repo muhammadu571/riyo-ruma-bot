@@ -1,21 +1,22 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { Telegraf } = require('telegraf');
 
-const token = process.env.BOT_TOKEN;
-const bot = new TelegramBot(token, { polling: true });
+// This tells the bot to use the 'BOT_TOKEN' you saved in the Vercel settings
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "👋 Welcome to RIYO&RUMA ONLINE BOT!\n\nThis bot helps with online services, sales, and promotions.");
-});
+bot.start((ctx) => ctx.reply('Welcome! Riyo Ruma AI Bot is now active. ❤️'));
+bot.on('text', (ctx) => ctx.reply('You said: ' + ctx.message.text));
 
-bot.onText(/\/help/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Here are some commands you can use:\n/start - Welcome message\n/help - Show this help menu");
-});
-
-bot.on('message', (msg) => {
-  const chatId = msg.chat.id;
-  if (msg.text && !msg.text.startsWith('/')) {
-    bot.sendMessage(chatId, `You said: ${msg.text}`);
+// This part is the "bridge" that lets Vercel talk to Telegram
+module.exports = async (req, res) => {
+  try {
+    if (req.method === 'POST') {
+      await bot.handleUpdate(req.body, res);
+      res.status(200).send('OK');
+    } else {
+      res.status(200).send('Bot is running and waiting for messages!');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('Something went wrong');
   }
-});
+};
